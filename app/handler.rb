@@ -1,7 +1,12 @@
 # require 'httparty'
 require 'json'
+require 'coolsms'
 
 def send_sms(event:, context:)
+  sms_args = {type: 'SMS', coutry: '82'}
+  coolsms = Coolsms::SMS::Send.new(sms_args)
+  coolsms.send(ENV['COOLSMS_SENDER'],'01075681248','테스트')
+
   # Sample pure Lambda function
 
   # Parameters

@@ -9,6 +9,11 @@ Description: >
 Globals:
   Function:
     Timeout: 30
+    Environment:
+      Variables:
+        COOLSMS_KEY: NCS54489A8E45515
+        COOLSMS_SECRET_KEY: 26B3D45FE6EA14CB381550E398D691BB
+        COOLSMS_SENDER: 16611916
 
 Resources: 
   ##############
