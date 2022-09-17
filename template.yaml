@@ -23,6 +23,17 @@ Resources:
         Authorizers:
           TokenAuthorizer:
             FunctionArn: !GetAtt AuthFunction.Arn
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName: hedwig-usage-plan
+          Description: hedwig rate limiter
+          Quota:
+            Limit: 100
+            Period: DAY
+          Throttle:
+            BurstLimit: 100
+            RateLimit: 50
       DefinitionBody:
         swagger: "2.0"
         info:
@@ -89,7 +100,7 @@ Resources:
   ApiQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: 'sam-pigeon-mail'
+      QueueName: 'hedwig-sam-sms-queue'
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ApiQueueDLQ.Arn
         maxReceiveCount: 10
@@ -97,7 +108,7 @@ Resources:
   ApiQueueDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: 'sam-pigeon-mail-dlq'
+      QueueName: 'hedwig-sam-sms-dlq'
 
 
   ##########
