@@ -8,55 +8,27 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
-
-# Resources:
-#   HelloWorldFunction:
-#     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-#     Properties:
-#       CodeUri: hello_world/
-#       Handler: app.lambda_handler
-#       Runtime: ruby2.7
-#       Architectures:
-#         - x86_64
-#       Events:
-#         HelloWorld:
-#           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-#           Properties:
-#             Path: /hello
-#             Method: get
+    Timeout: 30
 
 Resources: 
+  ##############
+  # ApiGateway #
+  ##############
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: !Ref Stage
+      StageName: dev
+      Auth:
+        DefaultAuthorizer: TokenAuthorizer
+        Authorizers:
+          TokenAuthorizer:
+            FunctionArn: !GetAtt AuthFunction.Arn
       DefinitionBody:
         swagger: "2.0"
         info:
           title: !Ref AWS::StackName
-        x-amazon-apigateway-request-validators:
-          body-only:
-            validateRequestBody: true
-            validateRequestParameters: false
-          params-only:
-            validateRequestBody: false
-            validateRequestParameters: true
-        x-amazon-apigateway-request-validator: body-only
-        securityDefinitions:
-          token-authorizer:
-            type: apiKey
-            name: Authorization
-            in: header
-            x-amazon-apigateway-authtype: oauth2
-            x-amazon-apigateway-authorizer:
-              type: token
-              authorizerUri: !Join ["", [!Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/", !GetAtt Authorizer.Arn, "/invocations" ]]
-              authorizerCredentials: !GetAtt ApiGatewayRole.Arn
-              identityValidationExpression: "Bearer [A-Za-z0-9_-]+.[A-Za-z0-9_-]+.[A-Za-z0-9_-]+"
-              authorizerResultTtlInSeconds: 300
         paths:
-          "/":
+          "/sms":
             post:
               consumes:
               - "application/json"
@@ -65,23 +37,14 @@ Resources:
               responses:
                 "200":
                   description: "200 response"
-                  schema:
-                    $ref: "#/definitions/Empty"
-              security:
-                - token-authorizer: []
-              parameters:
-                - in: body
-                  name: MailSendBody
-                  required: true
-                  schema:
-                    $ref: "#/definitions/MailSendBody"
-              x-amazon-apigateway-request-validator: body-only
               x-amazon-apigateway-integration:
                 credentials: !GetAtt ApiGatewayRole.Arn
                 uri: !Sub "arn:aws:apigateway:${AWS::Region}:sqs:path//"
                 responses:
                   default:
                     statusCode: "200"
+                    responseTemplates: 
+                      application/json: '{"result": "ok"}'
                 requestParameters:
                   integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
                 requestTemplates:
@@ -90,28 +53,11 @@ Resources:
                 passthroughBehavior: "never"
                 httpMethod: "POST"
                 type: "aws"
-        definitions:
-          Empty:
-            type: object
-            title: Empty
-          MailSendBody:
-            title: MailSendBody
-            type: object
-            properties:
-              template:
-                type: string
-              locale:
-                type: string
-              userName:
-                type: string
-              userEmail:
-                type: string
-            required:
-              - template
-              - locale
-              - userName
-              - userEmail
 
+
+  ############
+  # IAM Role #
+  ############              
   ApiGatewayRole:
     Type: AWS::IAM::Role
     Properties:
@@ -136,15 +82,10 @@ Resources:
                   - sqs:ReceiveMessage
                   - sqs:SendMessage
                 Resource: !GetAtt ApiQueue.Arn
-        - PolicyName: AuthorizerPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - lambda:InvokeFunction
-                Resource: !GetAtt Authorizer.Arn
 
+  #######
+  # SQS #
+  #######           
   ApiQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -157,6 +98,30 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: 'sam-pigeon-mail-dlq'
+
+
+  ##########
+  # Lambda #
+  ##########  
+  SQSHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: handler.send_sms
+      Runtime: ruby2.7
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt ApiQueue.Arn
+            BatchSize: 3
+
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: authorizer.protect
+      Runtime: ruby2.7        
 
 
 

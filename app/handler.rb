@@ -1,7 +1,7 @@
 # require 'httparty'
 require 'json'
 
-def lambda_handler(event:, context:)
+def send_sms(event:, context:)
   # Sample pure Lambda function
 
   # Parameters
@@ -27,6 +27,11 @@ def lambda_handler(event:, context:)
   #   puts error.inspect
   #   raise error
   # end
+  p "========= SQS RECEIVED MESSAGE ========="
+  p event
+  p "========================================"
+  p context
+  p "========================================"
 
   {
     statusCode: 200,

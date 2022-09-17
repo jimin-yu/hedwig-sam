@@ -1,5 +1,19 @@
 # hedwig-sam
 
+체크리스트
+- 환경별 parameter
+- api -> sqs -> sms 전송
+- authorizer
+- api key rate limit
+- 환경변수
+- secrets manager
+
+### deploy
+```
+# samconfig.toml 파일 설정대로
+sam deploy --config-env <qa|prod>
+```
+
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
 
 - hello_world - Code for the application's Lambda function.
