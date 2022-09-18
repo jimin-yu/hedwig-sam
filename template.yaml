@@ -43,6 +43,13 @@ Resources:
         swagger: "2.0"
         info:
           title: !Ref AWS::StackName
+        x-amazon-apigateway-request-validators:
+          all:
+            validateRequestBody: true
+            validateRequestParameters: true
+          body-only:
+            validateRequestBody: true
+            validateRequestParameters: false
         paths:
           "/sms":
             post:
@@ -50,6 +57,13 @@ Resources:
               - "application/json"
               produces:
               - "application/json"
+              x-amazon-apigateway-request-validator: body-only
+              parameters:
+              - in: body
+                name: SmsSendBody
+                required: true
+                schema:
+                  $ref: "#/definitions/SmsSendBody"
               responses:
                 "200":
                   description: "200 response"
@@ -69,6 +83,21 @@ Resources:
                 passthroughBehavior: "never"
                 httpMethod: "POST"
                 type: "aws"
+        definitions:
+          SmsSendBody:
+            title: SmsSendBody
+            type: object
+            properties:
+              receiver:
+                type: string
+              content:
+                type: string
+              country_code:
+                type: string
+            required:
+              - receiver
+              - content
+            
 
 
   ############
@@ -123,7 +152,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: app/
-      Handler: handler.send_sms
+      Handler: handlers/sms_handler.send_message
       Runtime: ruby2.7
       Events:
         MySQSEvent:

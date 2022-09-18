@@ -1,18 +1,26 @@
 # hedwig-sam
 
 체크리스트
-- 환경별 parameter
+- 환경별로 deploy
 - api -> sqs -> sms 전송
 - authorizer
 - api key rate limit
 - 환경변수
 - secrets manager
 - request body validate
+- 사용자 지정 도메인 이름
+- api response
 
-### deploy
+### CLI
 ```
-# samconfig.toml 파일 설정대로
-sam build
+빌드
+sam build --use-container
+
+로컬테스트
+sam local invoke SQSHandlerFunction -e events/sqs_event.json
+
+배포
+samconfig.toml 파일
 sam deploy --guided
 ```
 
