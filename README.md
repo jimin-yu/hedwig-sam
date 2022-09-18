@@ -7,11 +7,13 @@
 - api key rate limit
 - 환경변수
 - secrets manager
+- request body validate
 
 ### deploy
 ```
 # samconfig.toml 파일 설정대로
-sam deploy --config-env <qa|prod>
+sam build
+sam deploy --guided
 ```
 
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.

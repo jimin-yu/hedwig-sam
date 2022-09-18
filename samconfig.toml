@@ -3,7 +3,7 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "hedwig-sam-app"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1vhelwtff1x26"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-17gg8e7c8o7fi"
 s3_prefix = "hedwig-sam-app"
 region = "ap-northeast-2"
 capabilities = "CAPABILITY_IAM"
