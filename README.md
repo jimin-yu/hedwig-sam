@@ -1,6 +1,7 @@
 # hedwig-sam
 
 체크리스트
+- apikey 생성
 - 환경별로 deploy
 - api -> sqs -> sms 전송
 - authorizer

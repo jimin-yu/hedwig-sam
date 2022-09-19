@@ -1,0 +1,71 @@
+version=0.1
+# dev
+[dev.global.parameters]
+profile = "deali-sandbox"
+region = "ap-northeast-2"
+s3_bucket = "hedwig-sam"
+s3_prefix = "hedwig-dev"
+
+[dev.package.parameters]
+output_template_file="packaged.yaml"
+
+[dev.deploy.parameters]
+stack_name = "hedwig-sam-dev"
+template_file = "packaged.yaml"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev"
+
+
+# qa
+[qa.global.parameters]
+profile = "deali-sandbox"
+region = "ap-northeast-2"
+s3_bucket = "hedwig-sam"
+s3_prefix = "hedwig-qa"
+
+[qa.package.parameters]
+output_template_file="packaged.yaml"
+
+[qa.deploy.parameters]
+stack_name = "hedwig-sam-qa"
+template_file = "packaged.yaml"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=qa"
+
+
+# stage
+[stage.global.parameters]
+profile = "deali-sandbox"
+region = "ap-northeast-2"
+s3_bucket = "hedwig-sam"
+s3_prefix = "hedwig-stage"
+
+[stage.package.parameters]
+output_template_file="packaged.yaml"
+
+[stage.deploy.parameters]
+stack_name = "hedwig-sam-stage"
+template_file = "packaged.yaml"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=stage"
+
+
+# prod
+[prod.global.parameters]
+profile = "deali-prod"
+region = "ap-northeast-2"
+s3_bucket = "hedwig-sam"
+s3_prefix = "hedwig-prod"
+
+[prod.package.parameters]
+output_template_file="packaged.yaml"
+
+[prod.deploy.parameters]
+stack_name = "hedwig-sam-prod"
+template_file = "packaged.yaml"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=production"

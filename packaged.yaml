@@ -176,7 +176,7 @@ Resources:
         - '-'
         - - hedwig-send-sms
           - Ref: Environment
-      CodeUri: s3://hedwig-sam/7546241ac68c379d95f1044febb78aad
+      CodeUri: s3://hedwig-sam/hedwig-dev/a0b835ac657df3021fce4bb9eedeb866
       Handler: handlers/sms_handler.send_message
       Runtime: ruby2.7
       Events:
@@ -198,7 +198,7 @@ Resources:
         - '-'
         - - hedwig-authorizer
           - Ref: Environment
-      CodeUri: s3://hedwig-sam/7546241ac68c379d95f1044febb78aad
+      CodeUri: s3://hedwig-sam/hedwig-dev/a0b835ac657df3021fce4bb9eedeb866
       Handler: authorizer.protect
       Runtime: ruby2.7
     Metadata:
