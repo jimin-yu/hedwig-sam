@@ -1,0 +1,205 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'hedwig-sam
+
+  SAM Template for hedwig-sam
+
+  '
+Globals:
+  Function:
+    Timeout: 30
+    Environment:
+      Variables:
+        COOLSMS_KEY: NCS54489A8E45515
+        COOLSMS_SECRET_KEY: 26B3D45FE6EA14CB381550E398D691BB
+        COOLSMS_SENDER: 16611916
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+    - dev
+    - qa
+    - stage
+    - prod
+Resources:
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName:
+        Ref: Environment
+      OpenApiVersion: '2.0'
+      Auth:
+        DefaultAuthorizer: TokenAuthorizer
+        Authorizers:
+          TokenAuthorizer:
+            FunctionArn:
+              Fn::GetAtt:
+              - AuthFunction
+              - Arn
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName: hedwig-usage-plan
+          Description: hedwig rate limiter
+          Quota:
+            Limit: 100
+            Period: DAY
+          Throttle:
+            BurstLimit: 100
+            RateLimit: 50
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title:
+            Ref: AWS::StackName
+        x-amazon-apigateway-request-validators:
+          all:
+            validateRequestBody: true
+            validateRequestParameters: true
+          body-only:
+            validateRequestBody: true
+            validateRequestParameters: false
+        paths:
+          /sms:
+            post:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              x-amazon-apigateway-request-validator: body-only
+              parameters:
+              - in: body
+                name: SmsSendBody
+                required: true
+                schema:
+                  $ref: '#/definitions/SmsSendBody'
+              responses:
+                '200':
+                  description: 200 response
+              x-amazon-apigateway-integration:
+                credentials:
+                  Fn::GetAtt:
+                  - ApiGatewayRole
+                  - Arn
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:sqs:path//
+                responses:
+                  default:
+                    statusCode: '200'
+                    responseTemplates:
+                      application/json: '{"result": "ok"}'
+                requestParameters:
+                  integration.request.header.Content-Type: '''application/x-www-form-urlencoded'''
+                requestTemplates:
+                  application/json:
+                    Fn::Sub: 'Action=SendMessage##
+
+                      &QueueUrl=$util.urlEncode(''${ApiQueue}'')##
+
+                      &MessageBody=$util.urlEncode($input.body)##
+
+                      '
+                passthroughBehavior: never
+                httpMethod: POST
+                type: aws
+        definitions:
+          SmsSendBody:
+            title: SmsSendBody
+            type: object
+            properties:
+              receiver:
+                type: string
+              content:
+                type: string
+              country_code:
+                type: string
+            required:
+            - receiver
+            - content
+    Metadata:
+      SamResourceId: ApiGateway
+  ApiGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - apigateway.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+      - PolicyName: ApiQueuePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - sqs:ReceiveMessage
+            - sqs:SendMessage
+            Resource:
+              Fn::GetAtt:
+              - ApiQueue
+              - Arn
+    Metadata:
+      SamResourceId: ApiGatewayRole
+  ApiQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName:
+        Fn::Sub: hedwig-send-sms-queue-${Environment}
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+          - ApiQueueDLQ
+          - Arn
+        maxReceiveCount: 10
+    Metadata:
+      SamResourceId: ApiQueue
+  ApiQueueDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName:
+        Fn::Sub: hedwig-send-sms-dlq-${Environment}
+    Metadata:
+      SamResourceId: ApiQueueDLQ
+  SQSHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Join:
+        - '-'
+        - - hedwig-send-sms
+          - Ref: Environment
+      CodeUri: s3://hedwig-sam/7546241ac68c379d95f1044febb78aad
+      Handler: handlers/sms_handler.send_message
+      Runtime: ruby2.7
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue:
+              Fn::GetAtt:
+              - ApiQueue
+              - Arn
+            BatchSize: 3
+    Metadata:
+      SamResourceId: SQSHandlerFunction
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Join:
+        - '-'
+        - - hedwig-authorizer
+          - Ref: Environment
+      CodeUri: s3://hedwig-sam/7546241ac68c379d95f1044febb78aad
+      Handler: authorizer.protect
+      Runtime: ruby2.7
+    Metadata:
+      SamResourceId: AuthFunction

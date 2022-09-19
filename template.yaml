@@ -33,6 +33,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref Environment
+      OpenApiVersion: '2.0'
       Auth:
         DefaultAuthorizer: TokenAuthorizer
         Authorizers:
@@ -144,7 +145,7 @@ Resources:
   ApiQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: 'hedwig-sam-sms-queue'
+      QueueName: !Sub "hedwig-send-sms-queue-${Environment}"
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ApiQueueDLQ.Arn
         maxReceiveCount: 10
@@ -152,7 +153,7 @@ Resources:
   ApiQueueDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: 'hedwig-sam-sms-dlq'
+      QueueName: !Sub "hedwig-send-sms-dlq-${Environment}"
 
 
   ##########
@@ -161,6 +162,7 @@ Resources:
   SQSHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Join [ "-", [hedwig-send-sms, !Ref Environment]]
       CodeUri: app/
       Handler: handlers/sms_handler.send_message
       Runtime: ruby2.7
@@ -174,6 +176,7 @@ Resources:
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Join [ "-", [hedwig-authorizer, !Ref Environment]]
       CodeUri: app/
       Handler: authorizer.protect
       Runtime: ruby2.7        

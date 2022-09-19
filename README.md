@@ -19,6 +19,11 @@ sam build --use-container
 로컬테스트
 sam local invoke SQSHandlerFunction -e events/sqs_event.json
 
+sam package
+- .zip 파일 생성
+- s3에 업로드
+- 
+
 배포
 samconfig.toml 파일
 sam deploy --guided
