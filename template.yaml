@@ -15,6 +15,16 @@ Globals:
         COOLSMS_SECRET_KEY: 26B3D45FE6EA14CB381550E398D691BB
         COOLSMS_SENDER: 16611916
 
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - qa
+      - stage
+      - prod
+
 Resources: 
   ##############
   # ApiGateway #
@@ -22,7 +32,7 @@ Resources:
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: dev
+      StageName: !Ref Environment
       Auth:
         DefaultAuthorizer: TokenAuthorizer
         Authorizers:
