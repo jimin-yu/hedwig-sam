@@ -1,34 +1,36 @@
 # hedwig-sam
-
-체크리스트
-- apikey 생성
+### 체크리스트
+- api -> sqs -> sms 전송 
+- authorizer 
+- api key rate limit 
+- request body validate 
+- api response 케이스마다 세분화
 - 환경별로 deploy
-- api -> sqs -> sms 전송
-- authorizer
-- api key rate limit
-- 환경변수
+- 환경변수 따로 저장
+- apikey 생성
 - secrets manager
-- request body validate
 - 사용자 지정 도메인 이름
-- api response
 
-### CLI
+### 로컬 테스트
 ```
-빌드
 sam build --use-container
-
-로컬테스트
 sam local invoke SQSHandlerFunction -e events/sqs_event.json
-
-sam package
-- .zip 파일 생성
-- s3에 업로드
-- 
-
-배포
-samconfig.toml 파일
-sam deploy --guided
 ```
+빌드 결과물은 `.aws-sam` 디렉토리 아래에 생성됩니다.
+use-container 옵션을 사용하는 경우, aws 람다 실행환경과 동일한 도커 이미지를 다운받아서 빌드를 시도하기 때문에 도커를 켜줘야합니다.
+
+### 배포
+```
+./deploy.sh
+```
+sam cli에 전달되는 옵션 값은 samconfig.toml 파일에 정의되어 있습니다.  
+[`environment`.`command`.parameters]
+
+#### 배포 전 확인
+- {s3_bucket} 이름의 s3 버킷이 배포하려는 계정, 리전에 생성되어 있는지 확인해주세요. (버킷 이름은 samconfig.toml 파일 확인)
+- `use-container` 옵션을 활성화 했을 경우 빌드전에 도커를 켜야합니다.
+
+--------
 
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
 
